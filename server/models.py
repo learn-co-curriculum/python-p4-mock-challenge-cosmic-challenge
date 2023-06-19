@@ -18,38 +18,39 @@ db = SQLAlchemy(metadata=metadata)
 
 class Planet(db.Model, SerializerMixin):
     __tablename__ = 'planets'
-
-    serialize_rules = ('-missions.planet', '-scientists.planets')
+    
+    serialize_rules = (-'missions.planet', 'scientists.planet')
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     distance_from_earth = db.Column(db.String)
     nearest_star = db.Column(db.String)
     image = db.Column(db.String)
+    
+    scientists = association_proxy('missions', 'scientist')
+    missions = db.relationship('Mission', backref='planets')
 
-    missions = db.relationship('Mission', backref='planet')
-    scientists = association_proxy('missions', 'scientist',
-        creator=lambda sci: Mission(scientist=sci))
+    def __repr__(self):
+        return f'<Planet {self.id}: {self.name}>'
 
 class Scientist(db.Model, SerializerMixin):
     __tablename__ = 'scientists'
-
-    serialize_rules = ('-missions.scientist', '-planets.scientists')
+    
+    serialize = (-'missions.scientist','planets.scientist')
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, unique=True)
+    name = db.Column(db.String)
     field_of_study = db.Column(db.String)
     avatar = db.Column(db.String)
-
-    missions = db.relationship('Mission', backref='scientist')
-    planets = association_proxy('missions', 'planet',
-        creator=lambda plt: Mission(planet=plt))
+    
+    planets = association_proxy('missions', 'planet')
+    missions = db.relationship('Mission', backref='scientists')
     
     @validates('name')
     def validate_name(self, key, name):
         if name:
             return name
-        raise ValueError('Scientist must have name.')
+        raise ValueError('Invalid name')
     
     @validates('field_of_study')
     def validate_name(self, key, field_of_study):
@@ -57,16 +58,19 @@ class Scientist(db.Model, SerializerMixin):
             return field_of_study
         raise ValueError('Scientist must have field of study.')
 
+    def __repr__(self):
+        return f'<Scientist {self.id}: {self.name}>'
+
 class Mission(db.Model, SerializerMixin):
     __tablename__ = 'missions'
-
-    serialize_rules = ('-scientist.missions', '-planet.missions')
+    
+    serialize = ('scientists.mission', 'planets.mission')
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
-
-    planet_id = db.Column(db.Integer, db.ForeignKey('planets.id'))
-    scientist_id = db.Column(db.Integer, db.ForeignKey('scientists.id'))
+    
+    planets = db.Column(db.Integer, db.ForeignKey('planets.id'))
+    scientists = db.Column(db.Integer, db.ForeignKey('scientists.id'))
 
     @validates('name')
     def validate_name(self, key, name):
