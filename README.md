@@ -376,3 +376,6 @@ recreating it .
 
 - [useCallback API](https://react.dev/reference/react/useCallback)
 - [Should you add useCallback everywhere?](https://react.dev/reference/react/useCallback#should-you-add-usecallback-everywhere)
+
+
+## backref is more flexible because we don't have to indicate in both places in the relationship we don't have to say that relationship is happening with those two other tables but back_populates you must indicate it needs to know (more detailed) 
